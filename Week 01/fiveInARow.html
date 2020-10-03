@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Five in a Row</title>
+  <style>
+    #board {
+      background-color: thistle;
+    }
+
+  </style>
+</head>
+<body>
+  <canvas id="board" width="560" height="560"></canvas>
+<script>
+
+// let pattern = new Array(15).fill(new Array(15).fill(0))
+let pattern = []
+
+let color   = 1
+
+let canvas, ctx
+
+initPattern()
+
+showPattern()
+
+function showPattern() {
+  initBoard()
+  for(let i = 0; i < 15; i++) {
+    for(let j = 0; j < 15; j++) {
+      if(pattern[i][j] === 0) {
+        continue
+      }
+      ctx.beginPath();
+      ctx.moveTo(j * 40, i * 40)
+      ctx.fillStyle = pattern[i][j] === 1 ? 'white' : 'black'
+      ctx.arc(j * 40, i * 40, 15, 0, Math.PI * 2)
+      ctx.fill()
+    } 
+  }
+}
+
+function userMove(e) {
+  let x = e.pageX - canvas.getBoundingClientRect().left
+  let y = e.pageY - canvas.getBoundingClientRect().top
+
+  x = x % 40 > 20 ? x - (x % 40) + 40 : x - (x % 40)
+  y = y % 40 > 20 ? y - (y % 40) + 40 : y - (y % 40)
+
+  x = x / 40
+  y = y / 40
+
+  if(pattern[y][x] !== 0) {
+    alert('当前已有落子')
+    return
+  }
+
+  pattern[y][x] = color
+
+  checkWin(pattern, [x, y]) && alert((color === 1 ? 'white' : 'black') + ' is winner!!!')
+
+  color = 3 - color
+  showPattern()
+}
+
+function checkWin(pattern, point) {
+  let x = point[0]
+  let y = point[1]
+  
+  let row = getRowArr(x, y)
+  let col = getColArr(x, y)
+  let slash = getSlashArr(x, y)
+  let backslash = getBackslashArr(x, y)
+
+  let winPossible = [row, col, slash, backslash]
+  for(let i = 0; i < winPossible.length; i++) {
+    if(hasFiveSame(winPossible[i])) {
+      return true
+    }
+  }
+  return false
+}
+
+function getRowArr(x, y) {
+  let arr = []
+  let start = x - 4
+  let end   = x + 4
+  for(let i = start; i <= end; i++) {
+    if(i < 0 || i > 14) continue
+    arr.push(pattern[y][i])
+  }
+  return arr
+}
+
+function getColArr(x, y) {
+  let arr = []
+  let start = y - 4
+  let end   = y + 4
+  for(let i = start; i <= end; i++) {
+    if(i < 0 || i > 14) continue
+    arr.push(pattern[i][x])
+  }
+  return arr
+}
+
+function getSlashArr(x, y) {
+  let arr = []
+  let [startX, startY] = [x, y]
+  while(arr.length < 5) {
+    if(startX >= 0 && startY < 15) {
+      arr.unshift(pattern[startY][startX])
+      startX--
+      startY++ 
+    } else { 
+      break
+    }
+  }
+  x++
+  y--
+  [startX, startY] = [x, y]
+  let right = []
+  while(right.length < 5) {
+    if(startX < 15 && startY >= 0) {
+      right.push(pattern[startY][startX])
+      startX++
+      startY--
+    } else break
+  }
+  return arr.concat(right)
+}
+
+function getBackslashArr(x, y) {
+  let arr = []
+  let [startX, startY] = [x, y]
+  while(arr.length < 5) {
+    if(startX >= 0 && startY >= 0) {
+      arr.unshift(pattern[startY][startX])
+      startX--
+      startY--
+    } else { 
+      break
+    }
+  }
+  x++
+  y++
+  [startX, startY] = [x, y]
+  let right = []
+  while(right.length < 5) {
+    if(startX < 15 && startY < 15) {
+      right.push(pattern[startY][startX])
+      startX++
+      startY++
+    } else break
+  }
+  // console.log('slash arr', arr)
+  return arr.concat(right)
+}
+
+function hasFiveSame(arr) {
+  if(arr.length < 5) return false
+  for(let i = 0; i < arr.length - 5 + 1; i++) {
+    if(fiveAllSame(arr.slice(i, i + 5))) {
+      return true
+    }
+  }
+  return false
+}
+
+function fiveAllSame(arr) {
+  if(arr.length < 5) return false
+  let result = true
+  arr.forEach(color => {
+    if(color === 0 || color !== arr[0])
+      result = false
+  })
+  return result
+}
+
+
+
+
+
+
+
+
+
+function initPattern () {
+  canvas = document.getElementById('board')
+  ctx = canvas.getContext('2d')
+  canvas.addEventListener('click', userMove)
+  for(let i = 0; i < 15; i++) {
+    let raw = []
+    for(let j = 0; j < 15; j++) {
+      raw.push(0)
+    } 
+    pattern.push(raw)
+  }
+}
+
+function initBoard() {
+  ctx.clearRect(0, 0, 560, 560)
+  for(let i = 0; i < 15; i++) {
+    ctx.beginPath();
+    ctx.moveTo(0,   i * 40);
+    ctx.lineTo(600, i * 40);
+    ctx.stroke();
+  }
+  for(let j = 0; j < 15; j++) {
+    ctx.beginPath();
+    ctx.moveTo(j * 40, 0);
+    ctx.lineTo(j * 40, 600);
+    ctx.stroke();
+  }
+}
+
+
+</script>
+</body>
+</html>
