@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>redgreen</title>
+  <style>
+    div {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 1px solid rgb(146, 146, 146);
+      display: inline-block;
+      margin: 30px;
+    }
+    .green.light {
+      background-color: green;
+    }
+    .yellow.light {
+      background-color: yellow;
+    }
+    .red.light {
+      background-color: red;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="green"></div>
+  <div class="yellow"></div>
+  <div class="red"></div>
+  
+  
+<script>
+go()
+
+function green() {
+  removeLights()
+  document.getElementsByClassName('green')[0].classList.add('light')
+}
+function red() {
+  removeLights()
+  document.getElementsByClassName('red')[0].classList.add('light')
+}
+function yellow() {
+  removeLights()
+  document.getElementsByClassName('yellow')[0].classList.add('light')
+}
+function removeLights() {
+  var lights = document.getElementsByTagName('div')
+  for(let i = 0; i < 3; i++) {
+    lights[i].classList.remove('light')
+  }
+}
+function sleep(time) {
+  return new Promise((resolve, reject) => {
+    setTimeout(resolve, time)
+  })
+}
+
+async function go() {
+  green()
+  await sleep(2000)
+  yellow()
+  await sleep(1000)
+  red()
+  await sleep(2000)
+  go()
+}
+
+
+</script>
+</body>
+</html>

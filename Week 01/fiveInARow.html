@@ -6,9 +6,8 @@
   <title>Five in a Row</title>
   <style>
     #board {
-      background-color: thistle;
+      background-color: #c5c3b1;
     }
-
   </style>
 </head>
 <body>
@@ -63,6 +62,10 @@ function userMove(e) {
 
   color = 3 - color
   showPattern()
+}
+
+function bestChoice(color) {
+  
 }
 
 function checkWin(pattern, point) {
