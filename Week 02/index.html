@@ -1,174 +1,91 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>map</title>
+  <title>Document</title>
   <style>
+    #container {
+      display: flex;
+      flex-wrap: wrap;
+      width: 700px;
+    }
     .cell {
-      display: inline-block;
       width: 6px;
       height: 6px;
-      line-height: 7px;
-      background-color: gray;
-      border-bottom: 1px solid white;
       border-right: 1px solid white;
-      vertical-align: top;
+      border-bottom: 1px solid white;
+      background-color: gray;
     }
-    #container {
-      width: 700px;
-      /* 不知道为啥winter的代码没有用到font-size=0也可以 */
-      font-size: 0; 
+    .cell.wall {
+      background-color: black;
     }
   </style>
 </head>
 <body>
 
   <div id="container"></div>
+  <button onclick="localStorage.setItem('map', JSON.stringify(map))">Save</button>
+  <button onclick="clearMap()">Clear Map</button>
 
-  <button onclick="localStorage.setItem('map', JSON.stringify(map))">save</button>
-  <button onclick="clearAll()">clearAll</button>
-  
 <script>
+let container = document.getElementById('container')
 
 let map = localStorage['map'] ? JSON.parse(localStorage['map']) : Array(10000).fill(0)
 
 initMap(map)
 
-class Sorted {
-  constructor(data, compare) {
-    this.data = data.slice()
-    this.compare = compare || ((a, b) => a - b)
-  }
-  take() {
-    if(!this.data.length) return
 
-    let min = this.data[0]
-    let minIndex = 0
-
-    for(let i = 0; i < this.data.length; i++) {
-      if(this.compare(this.data[i], min) < 0) {
-        min = this.data[i]
-        minIndex = i
-      }
-    }
-
-    this.data[minIndex] = this.data[this.data.length - 1] // 性能优化
-    this.data.pop()
-
-    return min
-  }
-  give(v) {
-    this.data.push(v)
-  }
-  get length() {
-    return this.data.length
-  }
-}
-
-function initMap(map) {
-  for(let y = 0; y < 100; y++) {
-    for(let x = 0; x < 100; x++) {
-      let cell = document.createElement('div')
-      cell.classList.add('cell')
-
-      if(map[y * 100 + x] === 1) {
-        cell.style.background = 'black'
-      }
-
-      cell.addEventListener('mousemove', () => {
-        if(mouseDown) {
-          if(clear) {
-            map[y * 100 + x] = 0
-            cell.style.background = ''
-          } else {
-            map[y * 100 + x] = 1
-            cell.style.background = 'black'
-          }
-        }
-      })
-      container.appendChild(cell)
-    } 
-  }
-}
-
-async function findPath(map, start, end) {
-  let table = Object.create(map)
-  let queue = new Sorted([start], (a, b) => distance(a) - distance(b))
-  
-  async function insert(x, y, pre) {
-    if(x < 0 || x >= 100 || y < 0 || y >= 100) return
-    if(table[y * 100 + x]) return
-
-    await sleep(30)
-    container.children[y * 100 + x].style.backgroundColor = 'lightgreen'
-    table[y * 100 + x] = pre
-    queue.give([x, y])
-  }
-
-  function distance(p) {
-    return (p[0] - end[0]) ** 2 + (p[1] - end[1]) ** 2
-  }
-
-  while(queue.length) {
-    let [x, y] = queue.take()
-
-    if(x === end[0] && y === end[1]) {
-      let path = []
-
-      while(x !== start[0] || y !== start[1] ) {
-        path.push(map[y * 100 + x]); // 卧槽 这个分号为啥这么重要？？？？？？？？？？？？？？？？？
-
-        [x, y] = table[y * 100 + x]
-
-        await sleep(30)
-
-        container.children[y * 100 + x].style.backgroundColor = 'purple'
-      }
-
-      return path
-    }
-    await insert(x - 1, y, [x, y])
-    await insert(x + 1, y, [x, y])
-    await insert(x, y - 1, [x, y])
-    await insert(x, y + 1, [x, y])
-
-    await insert(x - 1, y - 1, [x, y])
-    await insert(x + 1, y + 1, [x, y])
-    await insert(x - 1, y + 1, [x, y])
-    await insert(x + 1, y - 1, [x, y])
-  } 
-  
-  return null
-}
 
 let mouseDown = false
-let clear     = false
+let clear = false
 
-document.addEventListener('mousedown', e => {
+document.addEventListener('mousedown', (e) => {
   mouseDown = true
   clear = e.which === 3
 })
-
-document.addEventListener('mouseup', e => {
+document.addEventListener('mouseup', (e) => {
   mouseDown = false
 })
+document.addEventListener('contextmenu', (e) => {
+  e.preventDefault()
+})
 
-document.addEventListener('contextmenu', e => e.preventDefault())
-
-function sleep(t) {
-  return new Promise(resolve => {
-    setTimeout(resolve, t)
-  })
+function initMap(mapArr) {
+  for (let y = 0; y < 100; y++) {
+    for (let x = 0; x < 100; x++) {
+      let cell = document.createElement('div')  
+      cell.classList.add('cell')
+      cell.addEventListener('mousemove', () => {
+        if(mouseDown) {
+          if(clear) {
+            mapArr[y * 100 + x] = 0
+            cell.classList.remove('wall')
+          } else {
+            mapArr[y * 100 + x] = 1
+            cell.classList.add('wall')
+          }
+        }
+      })
+      if(mapArr[y * 100 + x] === 1) {
+        cell.classList.add('wall')
+      }
+      container.appendChild(cell)
+    }
+  }
 }
 
-function clearAll() {
+function clearMap () {
+  map = map.fill(0)
+  localStorage['map'] = JSON.stringify(map)
   container.innerHTML = ''
-  map = Array(10000).fill(0)
-  initMap()
+  initMap(map)
 }
+
 
 
 </script>
+  
 </body>
 </html>
