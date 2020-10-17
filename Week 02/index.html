@@ -30,11 +30,20 @@
   <button onclick="clearMap()">Clear Map</button>
 
 <script>
+
 let container = document.getElementById('container')
 
 let map = localStorage['map'] ? JSON.parse(localStorage['map']) : Array(10000).fill(0)
 
-initMap(map)
+drawMap(map)
+
+function findPath(map, start, end) {
+  let table = Object.create(map)
+  let queue = []
+
+
+
+}
 
 
 
@@ -52,7 +61,7 @@ document.addEventListener('contextmenu', (e) => {
   e.preventDefault()
 })
 
-function initMap(mapArr) {
+function drawMap(mapArr) {
   for (let y = 0; y < 100; y++) {
     for (let x = 0; x < 100; x++) {
       let cell = document.createElement('div')  
@@ -80,7 +89,7 @@ function clearMap () {
   map = map.fill(0)
   localStorage['map'] = JSON.stringify(map)
   container.innerHTML = ''
-  initMap(map)
+  drawMap(map)
 }
 
 
