@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,11 +8,10 @@
     #container {
       display: flex;
       flex-wrap: wrap;
-      width: 700px;
+      width: 800px;
     }
     .cell {
-      width: 6px;
-      height: 6px;
+      box-sizing: border-box;
       border-right: 1px solid white;
       border-bottom: 1px solid white;
       background-color: gray;
@@ -24,7 +22,6 @@
   </style>
 </head>
 <body>
-
   <div id="container"></div>
   <button onclick="localStorage.setItem('map', JSON.stringify(map))">Save</button>
   <button onclick="clearMap()">Clear Map</button>
@@ -33,17 +30,75 @@
 
 let container = document.getElementById('container')
 
-let map = localStorage['map'] ? JSON.parse(localStorage['map']) : Array(10000).fill(0)
+let rows = 20 // 可改100
+let map = localStorage['map'] ? JSON.parse(localStorage['map']) : Array(rows ** 2).fill(0)
 
-drawMap(map)
+drawMap(map, rows)
 
-function findPath(map, start, end) {
+async function findPath(map, start, end) {
   let table = Object.create(map)
-  let queue = []
 
+  if(map[start[1] * rows + start[0]] === 1
+    || map[end[1] * rows + end[0]]   === 1) {
+    console.log('起点 || 终点 撞墙')
+    return
+  }
 
+  drawStartEnd(start, end)
+
+  let queue = [ start ]
+  let insertCounter = 0
+
+  while(true) {
+    let [x, y] = queue.shift();
+
+    if(x === end[0] && y === end[1]) {
+      let path = []
+      while(true) {
+        if(x === start[0] && y === start[1]) {
+          console.log('success path', path)
+          return path
+        };
+
+        [x, y] = table[y * rows + x];
+        path.push([x, y])
+
+        // await sleep(16)
+        if(x === start[0] && y === start[1])
+          return
+        fillColor(y * rows + x, 'purple', '')
+      }
+    }
+
+    await insert([x, y - 1], [x, y])
+    await insert([x, y + 1], [x, y])
+    await insert([x - 1, y], [x, y])
+    await insert([x + 1, y], [x, y])
+
+    await insert([x - 1, y - 1], [x, y])
+    await insert([x + 1, y - 1], [x, y])
+    await insert([x - 1, y + 1], [x, y])
+    await insert([x + 1, y + 1], [x, y])
+  }
+  
+  async function insert(point, pre) {
+    let [x, y] = point;
+    if(x >= 0 && x < rows && y >= 0 && y < rows) {
+      if(table[y * rows + x] === 0) {
+        table[y * rows + x] = pre;
+        await sleep(1)
+        queue.push(point)
+        if((x === start[0] && y === start[1]) || (x === end[0] && y === end[1])) return
+        fillColor(y * rows + x, 'green', insertCounter++)
+      }
+    }
+  }
 
 }
+
+
+
+
 
 
 
@@ -61,23 +116,26 @@ document.addEventListener('contextmenu', (e) => {
   e.preventDefault()
 })
 
-function drawMap(mapArr) {
-  for (let y = 0; y < 100; y++) {
-    for (let x = 0; x < 100; x++) {
+function drawMap(mapArr, rows) {
+  let cellWidth = 800 / rows 
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < rows; x++) {
       let cell = document.createElement('div')  
       cell.classList.add('cell')
+      cell.style.width  = cellWidth + 'px'
+      cell.style.height = cellWidth + 'px'
       cell.addEventListener('mousemove', () => {
         if(mouseDown) {
           if(clear) {
-            mapArr[y * 100 + x] = 0
+            mapArr[y * rows + x] = 0
             cell.classList.remove('wall')
           } else {
-            mapArr[y * 100 + x] = 1
+            mapArr[y * rows + x] = 1
             cell.classList.add('wall')
           }
         }
       })
-      if(mapArr[y * 100 + x] === 1) {
+      if(mapArr[y * rows + x] === 1) {
         cell.classList.add('wall')
       }
       container.appendChild(cell)
@@ -85,11 +143,27 @@ function drawMap(mapArr) {
   }
 }
 
+function drawStartEnd (start, end) {
+  let [x, y] = start
+  fillColor(y * rows + x, 'blue', 'start');
+  [x, y] = end
+  fillColor(y * rows + x, 'red', 'end')
+}
+
+function fillColor (index, color, insertCounter) {
+  container.children[index].style.backgroundColor = color 
+  container.children[index].innerHTML = insertCounter
+}
+
 function clearMap () {
   map = map.fill(0)
   localStorage['map'] = JSON.stringify(map)
   container.innerHTML = ''
-  drawMap(map)
+  drawMap(map, rows)
+}
+
+function sleep(t) {
+  return new Promise(re => setTimeout(re, t))
 }
 
 
