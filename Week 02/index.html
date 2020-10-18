@@ -30,10 +30,34 @@
 
 let container = document.getElementById('container')
 
-let rows = 20 // 可改100
+let rows = 40
 let map = localStorage['map'] ? JSON.parse(localStorage['map']) : Array(rows ** 2).fill(0)
 
 drawMap(map, rows)
+
+class Queue {
+  constructor(data, compare) {
+    this.data = data
+    this.compare = compare
+  }
+
+  take() {
+    let min = this.data[0]
+    let minIndex = 0
+    for(let i = 1; i < this.data.length; i++) {
+      if(this.compare(min, this.data[i]) > 0) {
+        min = this.data[i]
+        minIndex = i
+      }
+    }
+    this.data[minIndex] = this.data[this.data.length - 1]
+    this.data.pop()
+    return min
+  }
+  insert(point) {
+    this.data.push(point)
+  } 
+}
 
 async function findPath(map, start, end) {
   let table = Object.create(map)
@@ -46,11 +70,17 @@ async function findPath(map, start, end) {
 
   drawStartEnd(start, end)
 
-  let queue = [ start ]
+  // let queue = [ start ]
+  let frontier = new Queue([start], (a, b) => distance(a, end) - distance(b, end))
+  
   let insertCounter = 0
 
   while(true) {
-    let [x, y] = queue.shift();
+    let [x, y] = frontier.take();
+
+  //   console.log(x, y)
+
+  // return
 
     if(x === end[0] && y === end[1]) {
       let path = []
@@ -63,7 +93,6 @@ async function findPath(map, start, end) {
         [x, y] = table[y * rows + x];
         path.push([x, y])
 
-        // await sleep(16)
         if(x === start[0] && y === start[1])
           return
         fillColor(y * rows + x, 'purple', '')
@@ -86,8 +115,8 @@ async function findPath(map, start, end) {
     if(x >= 0 && x < rows && y >= 0 && y < rows) {
       if(table[y * rows + x] === 0) {
         table[y * rows + x] = pre;
-        await sleep(1)
-        queue.push(point)
+        await sleep(10)
+        frontier.insert(point)
         if((x === start[0] && y === start[1]) || (x === end[0] && y === end[1])) return
         fillColor(y * rows + x, 'green', insertCounter++)
       }
@@ -96,9 +125,9 @@ async function findPath(map, start, end) {
 
 }
 
-
-
-
+function distance(p1, p2) {
+  return ((p2[0] - p1[0]) ** 2) + ((p2[1]  - p1[1]) **2)
+}
 
 
 
@@ -152,7 +181,7 @@ function drawStartEnd (start, end) {
 
 function fillColor (index, color, insertCounter) {
   container.children[index].style.backgroundColor = color 
-  container.children[index].innerHTML = insertCounter
+  // container.children[index].innerHTML = insertCounter
 }
 
 function clearMap () {
